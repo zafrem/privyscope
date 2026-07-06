@@ -24,7 +24,7 @@ class NerRuntime:
         from transformers import AutoTokenizer
 
         self.dir = Path(bundle_dir)
-        meta = json.loads((self.dir / "entiscope_meta.json").read_text(encoding="utf-8"))
+        meta = json.loads((self.dir / "privyscope_meta.json").read_text(encoding="utf-8"))
         self.labels: List[str] = meta["labels"]
         self.default_biases: List[float] = meta["transition_biases"]
         self.max_length: int = int(meta.get("max_length", 256))

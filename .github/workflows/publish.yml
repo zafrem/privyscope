@@ -1,4 +1,4 @@
-name: Publish entiscope
+name: Publish privyscope
 
 # Builds the sdist + wheel and publishes to PyPI.
 #   - Publishing a GitHub Release  -> uploads to PyPI.
@@ -8,8 +8,8 @@ name: Publish entiscope
 #   TEST_PYPI_API_TOKEN  (test.pypi.org -> Account -> API tokens)
 # Scope each token to the environment below (Settings -> Environments).
 #
-# Publish order is load-bearing: `entiscope` (core) must reach PyPI BEFORE the
-# language packs (entiscope-ko, entiscope-en, …), which depend on it.
+# Publish order is load-bearing: `privyscope` (core) must reach PyPI BEFORE the
+# language packs (privyscope-ko, privyscope-en, …), which depend on it.
 
 on:
   release:

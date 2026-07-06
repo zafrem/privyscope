@@ -1,6 +1,6 @@
 """Self-contained BIOES token classifier for user fine-tuning (SRS FR-2.6).
 
-Mirrors the entiscope-core training model but depends only on the public engine
+Mirrors the privyscope-core training model but depends only on the public engine
 plus torch/transformers (the ``[train]`` extra). Reuses the shared transition
 scheme from ``_core.transitions`` so decoding stays identical to inference.
 """

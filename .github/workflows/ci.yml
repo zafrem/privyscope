@@ -1,4 +1,4 @@
-name: entiscope CI
+name: privyscope CI
 
 on:
   push:
@@ -32,4 +32,4 @@ jobs:
       - name: Install
         run: pip install -e '.[dev]'
       - name: Tests (regex-only; no weights needed)
-        run: pytest -q --cov=entiscope --cov-report=term-missing
+        run: pytest -q --cov=privyscope --cov-report=term-missing

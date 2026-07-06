@@ -3,13 +3,13 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "entiscope"
+name = "privyscope"
 version = "0.1.0"
-description = "entiscope — multilingual PII detection & masking engine (ONNX, BIOES + Viterbi). Install a language pack, e.g. entiscope-ko."
+description = "privyscope — multilingual PII detection & masking engine (ONNX, BIOES + Viterbi). Install a language pack, e.g. privyscope-ko."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "Apache-2.0" }
-authors = [{ name = "entiscope Core Team" }]
+authors = [{ name = "privyscope Core Team" }]
 keywords = ["pii", "ner", "redaction", "privacy", "onnx", "multilingual"]
 classifiers = [
     "License :: OSI Approved :: Apache Software License",
@@ -39,15 +39,15 @@ dev = ["pytest>=7.0", "pytest-cov>=4.0"]
 # The console command lives ONLY in the core, so co-installed language packs
 # never collide over it.
 [project.scripts]
-entiscope = "entiscope.__main__:main"
+privyscope = "privyscope.__main__:main"
 
 [project.urls]
-Homepage = "https://github.com/zafrem/entiscope"
-Documentation = "https://github.com/zafrem/entiscope/blob/main/README.md"
+Homepage = "https://github.com/zafrem/privyscope"
+Documentation = "https://github.com/zafrem/privyscope/blob/main/README.md"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["entiscope*"]
+include = ["privyscope*"]
 
 # The core ships NO language YAML — regex rules and entity configs come from the
-# installed language plugins (entiscope-ko, entiscope-en, …).
+# installed language plugins (privyscope-ko, privyscope-en, …).

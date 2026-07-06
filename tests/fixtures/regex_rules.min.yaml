@@ -1,5 +1,5 @@
 # Minimal language-neutral regex ruleset for CORE engine tests only.
-# The shipped language data lives in the plugin packages (entiscope-ko, …);
+# The shipped language data lives in the plugin packages (privyscope-ko, …);
 # this fixture exercises the engine without depending on any installed plugin.
 version: 1
 language: test

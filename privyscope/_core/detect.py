@@ -2,7 +2,7 @@
 
 Pure stdlib, no new dependencies. Detection is **restricted to the set of
 installed/available language codes**, so the router never picks a language the
-user has not installed. Used by :meth:`entiscope.Entiscope.auto` and the CLI when
+user has not installed. Used by :meth:`privyscope.Privyscope.auto` and the CLI when
 multiple language plugins are present and no ``--lang`` was given.
 """
 from __future__ import annotations
@@ -37,7 +37,7 @@ def _script_counts(text: str) -> Dict[str, int]:
 # Characters that occur only in Simplified or only in Traditional Chinese, used
 # to disambiguate zh-Hans vs zh-Hant — both are Han script, so the script scan
 # alone cannot tell them apart. Not exhaustive: text built only from characters
-# shared by both forms yields no signal and falls back to $ENTISCOPE_LANG /
+# shared by both forms yields no signal and falls back to $PRIVYSCOPE_LANG /
 # --lang (or, when only one zh form is installed, that one).
 _SIMP_ONLY = frozenset(
     "们这国时还会个东车门长马问说见证过当后样经现边师应关习书实战报"
@@ -85,7 +85,7 @@ def detect_language(text: str, available: Iterable[str]) -> Optional[str]:
     (or legacy ``zh``) by a Simplified-vs-Traditional character heuristic.
     Distinctive scripts (Hangul/kana/Han) outrank Latin — Latin appears in every
     language's text (emails, URLs), so any Hangul beats an embedded ``a@b.com``.
-    Falls back to ``$ENTISCOPE_LANG``, then the sole available language, else
+    Falls back to ``$PRIVYSCOPE_LANG``, then the sole available language, else
     ``None``.
     """
     avail = set(available)
@@ -113,7 +113,7 @@ def detect_language(text: str, available: Iterable[str]) -> Optional[str]:
     if c["Latin"] and "en" in avail:
         return "en"
 
-    env = os.environ.get("ENTISCOPE_LANG")
+    env = os.environ.get("PRIVYSCOPE_LANG")
     if env and env in avail:
         return env
     if len(avail) == 1:

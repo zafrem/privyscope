@@ -1,6 +1,6 @@
 """Canonical PII entity codes and BIOES label-space construction.
 
-Source of truth: ENTISCOPE-SRS-001 §6 and ENTISCOPE-ENTITY-SPEC-001 §2.
+Source of truth: PRIVYSCOPE-SRS-001 §6 and PRIVYSCOPE-ENTITY-SPEC-001 §2.
 This module is shared by the synthesis engine, the domain-adaptive MLM probes,
 and the NER fine-tuning label schema so that the same taxonomy is used end to end.
 """

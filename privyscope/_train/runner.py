@@ -21,13 +21,13 @@ from .._model.config import DEFAULT_BASE_MODEL, load_label_space, remap_label
 from .modeling import BioesModel, TrainConfig
 
 USAGE_TEMPLATE = """\
-# entiscope fine-tuned checkpoint
+# privyscope fine-tuned checkpoint
 
-Produced by `entiscope train`. To use this checkpoint, export it to ONNX with the
-entiscope-core `export_onnx.py` pipeline, then load via:
+Produced by `privyscope train`. To use this checkpoint, export it to ONNX with the
+privyscope-core `export_onnx.py` pipeline, then load via:
 
-    from entiscope import Entiscope
-    engine = Entiscope.from_pretrained(cache_dir="{out}")
+    from privyscope import Privyscope
+    engine = Privyscope.from_pretrained(cache_dir="{out}")
 
 Labels: {labels}
 Base model: {base}
@@ -104,7 +104,7 @@ def run_train(args) -> dict:
               str(out_dir / "model.safetensors"))
     tokenizer.save_pretrained(out_dir)
     (out_dir / "config.json").write_text(json.dumps({
-        "model_type": "entiscope-bioes", "base_model": base, "labels": labels,
+        "model_type": "privyscope-bioes", "base_model": base, "labels": labels,
         "id2label": id2label, "label2id": label2id,
         "transition_categories": ["outside", "begin", "single", "inside", "end", "exit"],
     }, ensure_ascii=False, indent=2), encoding="utf-8")

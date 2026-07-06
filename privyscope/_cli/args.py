@@ -14,8 +14,8 @@ def _version_string() -> str:
     if langs:
         detail = ", ".join(f"{c} ({p.display_name})" for c, p in sorted(langs.items()))
     else:
-        detail = "none — install one, e.g. pip install entiscope-ko"
-    return f"entiscope {__version__} (languages: {detail})"
+        detail = "none — install one, e.g. pip install privyscope-ko"
+    return f"privyscope {__version__} (languages: {detail})"
 
 
 def _add_lang(parser: argparse.ArgumentParser) -> None:
@@ -28,8 +28,8 @@ def _add_lang(parser: argparse.ArgumentParser) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="entiscope",
-        description="entiscope — multilingual PII detection & masking (redact / eval / train)",
+        prog="privyscope",
+        description="privyscope — multilingual PII detection & masking (redact / eval / train)",
     )
     p.add_argument("--version", action="version", version=_version_string())
     sub = p.add_subparsers(dest="command", required=True)

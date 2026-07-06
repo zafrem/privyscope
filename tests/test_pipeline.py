@@ -1,6 +1,6 @@
 """End-to-end pipeline tests in regex-only mode (fixture ruleset)."""
-from entiscope._core.bioes import Span
-from entiscope._core.pipeline import merge_union
+from privyscope._core.bioes import Span
+from privyscope._core.pipeline import merge_union
 
 
 def test_redact_basic(engine):

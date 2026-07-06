@@ -1,7 +1,7 @@
 """Per-text language auto-detection heuristics."""
 import pytest
 
-from entiscope._core.detect import detect_language
+from privyscope._core.detect import detect_language
 
 ALL = ["ko", "en", "ja", "zh"]
 
@@ -29,12 +29,12 @@ def test_restricted_to_available():
 
 
 def test_env_fallback(monkeypatch):
-    monkeypatch.setenv("ENTISCOPE_LANG", "en")
+    monkeypatch.setenv("PRIVYSCOPE_LANG", "en")
     assert detect_language("12345 !!!", ["en", "ja"]) == "en"
 
 
 def test_no_signal_no_env_returns_none(monkeypatch):
-    monkeypatch.delenv("ENTISCOPE_LANG", raising=False)
+    monkeypatch.delenv("PRIVYSCOPE_LANG", raising=False)
     assert detect_language("12345 !!!", ["en", "ja"]) is None
 
 

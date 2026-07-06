@@ -2,7 +2,7 @@
 
 Supports custom label spaces so organisations can fine-tune on their own PII
 taxonomy without touching model code: a ``--label-space-json`` file maps source
-labels to entiscope (or custom) entity codes.
+labels to privyscope (or custom) entity codes.
 """
 from __future__ import annotations
 

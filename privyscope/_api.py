@@ -1,14 +1,14 @@
 """Public Python API (SRS FR-2.7).
 
-    from entiscope import Entiscope            # or: from entiscope_ko import Entiscope
+    from privyscope import Privyscope            # or: from privyscope_ko import Privyscope
 
     # one language (explicit, or the sole one installed)
-    engine = Entiscope.from_pretrained(lang="ko")
+    engine = Privyscope.from_pretrained(lang="ko")
     result = engine.redact("홍길동의 전화번호는 010-1234-5678")
     result.masked_text      # "<PER>의 전화번호는 <PHONE>"
 
     # multiple languages installed → route each text automatically
-    auto = Entiscope.auto()
+    auto = Privyscope.auto()
     auto.redact("홍길동 010-1234-5678")          # → Korean engine
     auto.redact("John Smith 555-123-4567")       # → English engine
 
@@ -17,7 +17,7 @@ available) plus an optional ONNX NER stage. ``regex_only=True`` runs the engine
 with no model weights — useful offline and for structurally-obvious PII.
 
 Language-specific data (regex rules, entity config, default weights repo) comes
-from an installed language plugin discovered via the ``entiscope.languages``
+from an installed language plugin discovered via the ``privyscope.languages``
 entry-point group; the core hardcodes nothing language-specific.
 """
 from __future__ import annotations
@@ -41,13 +41,13 @@ OperatingPoint = Union[str, Sequence[float], dict, None]
 
 def _regex_rules_path(plugin: LanguagePlugin) -> Path:
     """Locate the active language's regex ruleset (env override wins)."""
-    env = os.environ.get("ENTISCOPE_REGEX_RULES")
+    env = os.environ.get("PRIVYSCOPE_REGEX_RULES")
     if env:
         return Path(env)
     return plugin.regex_rules_path()
 
 
-class Entiscope:
+class Privyscope:
     """Two-stage PII redaction engine for a single language."""
 
     def __init__(
@@ -73,7 +73,7 @@ class Entiscope:
         regex_rules: Optional[str] = None,
         providers: Optional[Sequence[str]] = None,
         regex_only: bool = False,
-    ) -> "Entiscope":
+    ) -> "Privyscope":
         """Load the engine for one language, fetching ONNX weights on first use.
 
         ``lang`` selects the language plugin; if omitted, the sole installed
@@ -97,7 +97,7 @@ class Entiscope:
     @classmethod
     def regex_only(
         cls, *, lang: Optional[str] = None, regex_rules: Optional[str] = None
-    ) -> "Entiscope":
+    ) -> "Privyscope":
         """Convenience constructor for a Stage-1-only engine (no weights)."""
         return cls.from_pretrained(regex_only=True, lang=lang, regex_rules=regex_rules)
 
@@ -109,13 +109,13 @@ class Entiscope:
         cache_dir: Optional[str] = None,
         providers: Optional[Sequence[str]] = None,
         regex_only: bool = False,
-    ) -> "AutoEntiscope":
+    ) -> "AutoPrivyscope":
         """Return a dispatcher that routes each text to its language engine.
 
         Languages are detected per text (Unicode-script heuristic) and restricted
         to the installed plugins. Per-language engines are built lazily and cached.
         """
-        return AutoEntiscope(
+        return AutoPrivyscope(
             operating_point=operating_point,
             cache_dir=cache_dir,
             providers=providers,
@@ -161,10 +161,10 @@ class Entiscope:
         return self._runtime is not None
 
 
-class AutoEntiscope:
-    """Multi-language dispatcher (see :meth:`Entiscope.auto`).
+class AutoPrivyscope:
+    """Multi-language dispatcher (see :meth:`Privyscope.auto`).
 
-    Mirrors the :class:`Entiscope` inference surface (``redact`` /
+    Mirrors the :class:`Privyscope` inference surface (``redact`` /
     ``batch_redact`` / ``has_ner``) and routes each call to a lazily-built,
     cached per-language engine chosen by :func:`detect_language`.
 
@@ -186,8 +186,8 @@ class AutoEntiscope:
         self._available = sorted(installed_languages())
         if not self._available:
             raise ValueError(
-                "no entiscope language plugin installed; install one, "
-                "e.g. pip install entiscope-ko"
+                "no privyscope language plugin installed; install one, "
+                "e.g. pip install privyscope-ko"
             )
         self._kwargs = dict(
             operating_point=operating_point,
@@ -196,14 +196,14 @@ class AutoEntiscope:
             regex_only=regex_only,
         )
         self._regex_only = regex_only
-        self._engines: Dict[str, Entiscope] = {}
+        self._engines: Dict[str, Privyscope] = {}
         self._lock = threading.Lock()
 
     @property
     def available_languages(self) -> List[str]:
         return list(self._available)
 
-    def _engine_for(self, lang: str) -> Entiscope:
+    def _engine_for(self, lang: str) -> Privyscope:
         # Fast path: already built (dict reads are atomic under the GIL).
         engine = self._engines.get(lang)
         if engine is not None:
@@ -213,15 +213,15 @@ class AutoEntiscope:
         with self._lock:
             engine = self._engines.get(lang)
             if engine is None:
-                engine = Entiscope.from_pretrained(lang=lang, **self._kwargs)
+                engine = Privyscope.from_pretrained(lang=lang, **self._kwargs)
                 self._engines[lang] = engine
             return engine
 
-    def preload(self, langs: Optional[Iterable[str]] = None) -> "AutoEntiscope":
+    def preload(self, langs: Optional[Iterable[str]] = None) -> "AutoPrivyscope":
         """Eagerly build (and cache) engines so the first request is warm.
 
         Builds every installed language by default, or just ``langs``. Returns
-        ``self`` for chaining, e.g. ``engine = Entiscope.auto().preload()``.
+        ``self`` for chaining, e.g. ``engine = Privyscope.auto().preload()``.
         Ideal at web-server startup: fail fast on missing weights and avoid a
         cold-start spike on the first redact call.
         """

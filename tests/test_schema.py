@@ -1,7 +1,7 @@
 """Output schema + eval metric tests (fixture ruleset)."""
-from entiscope._core.bioes import Span
-from entiscope._core.schema import DetectedSpan, build_redacted_text
-from entiscope._eval.metrics import TypedAccumulator, UntypedAccumulator
+from privyscope._core.bioes import Span
+from privyscope._core.schema import DetectedSpan, build_redacted_text
+from privyscope._eval.metrics import TypedAccumulator, UntypedAccumulator
 
 
 def test_schema_shape(engine):

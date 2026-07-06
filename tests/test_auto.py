@@ -1,18 +1,18 @@
-"""AutoEntiscope dispatcher: caching, preload, and thread-safe construction."""
+"""AutoPrivyscope dispatcher: caching, preload, and thread-safe construction."""
 import threading
 import time
 
 import pytest
 
-from entiscope import _api
-from entiscope._api import AutoEntiscope, Entiscope
+from privyscope import _api
+from privyscope._api import AutoPrivyscope, Privyscope
 
 
 @pytest.fixture
 def counting_auto(monkeypatch):
-    """An AutoEntiscope whose engine construction is counted (no real weights).
+    """An AutoPrivyscope whose engine construction is counted (no real weights).
 
-    Patches the installed-language set and ``Entiscope.from_pretrained`` so each
+    Patches the installed-language set and ``Privyscope.from_pretrained`` so each
     build is a cheap sentinel; a small sleep widens the race window so the
     double-checked lock is actually exercised.
     """
@@ -25,10 +25,10 @@ def counting_auto(monkeypatch):
         builds[lang] = builds.get(lang, 0) + 1
         return f"engine::{lang}"
 
-    monkeypatch.setattr(Entiscope, "from_pretrained", classmethod(
+    monkeypatch.setattr(Privyscope, "from_pretrained", classmethod(
         lambda cls, *a, lang=None, **k: fake_from_pretrained(lang=lang)
     ))
-    auto = AutoEntiscope(operating_point="balanced", cache_dir=None, providers=None, regex_only=True)
+    auto = AutoPrivyscope(operating_point="balanced", cache_dir=None, providers=None, regex_only=True)
     return auto, builds
 
 

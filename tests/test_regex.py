@@ -1,5 +1,5 @@
 """Stage 1 regex filter tests over the language-neutral fixture ruleset."""
-from entiscope._core.regex_filter import RegexFilter
+from privyscope._core.regex_filter import RegexFilter
 
 
 def _filter(fixture_rules):

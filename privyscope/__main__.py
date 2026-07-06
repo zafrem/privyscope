@@ -1,10 +1,10 @@
-"""Unified CLI entrypoint: ``entiscope redact | eval | train`` (SRS FR-2.1)."""
+"""Unified CLI entrypoint: ``privyscope redact | eval | train`` (SRS FR-2.1)."""
 from __future__ import annotations
 
 import sys
 from typing import List, Optional, Sequence
 
-from ._api import AutoEntiscope, Entiscope
+from ._api import AutoPrivyscope, Privyscope
 from ._cli.args import build_parser
 from ._cli.render import print_result, supports_color
 from ._core.plugins import installed_languages, resolve_plugin
@@ -41,7 +41,7 @@ def _build_engine(args):
 
     ``--lang X`` → that language. No ``--lang`` with one plugin installed → that
     plugin. No ``--lang`` with several installed → an auto-routing dispatcher.
-    Returns an ``Entiscope`` or an ``AutoEntiscope`` (same redact surface).
+    Returns an ``Privyscope`` or an ``AutoPrivyscope`` (same redact surface).
     """
     operating_point = _parse_operating_point(getattr(args, "operating_point", "balanced"))
     cache_dir = getattr(args, "cache_dir", None)
@@ -50,13 +50,13 @@ def _build_engine(args):
     lang = getattr(args, "lang", None)
 
     if lang is None and len(installed_languages()) > 1:
-        return AutoEntiscope(
+        return AutoPrivyscope(
             operating_point=operating_point,
             cache_dir=cache_dir,
             providers=providers,
             regex_only=regex_only,
         )
-    return Entiscope.from_pretrained(
+    return Privyscope.from_pretrained(
         operating_point=operating_point,
         lang=lang,
         cache_dir=cache_dir,
@@ -73,7 +73,7 @@ def _cmd_redact(args) -> int:
     as_json = args.json or not supports_color()
 
     if text is None:  # interactive mode (FR-2.1)
-        print("entiscope interactive redact — enter text (Ctrl-D to exit)", file=sys.stderr)
+        print("privyscope interactive redact — enter text (Ctrl-D to exit)", file=sys.stderr)
         for line in sys.stdin:
             line = line.rstrip("\n")
             if not line:
@@ -101,7 +101,7 @@ def _cmd_train(args) -> int:
         from ._train.runner import run_train
     except ImportError as exc:
         print(
-            f"training requires the optional extra: pip install 'entiscope[train]' ({exc})",
+            f"training requires the optional extra: pip install 'privyscope[train]' ({exc})",
             file=sys.stderr,
         )
         return 2

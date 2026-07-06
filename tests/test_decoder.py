@@ -1,10 +1,10 @@
 """Constrained Viterbi decoder + transition scheme tests."""
 import numpy as np
 
-from entiscope._core.bioes import bioes_to_spans
-from entiscope._core.decoder import viterbi_decode
-from entiscope._core.entities import build_label_list
-from entiscope._core.transitions import (
+from privyscope._core.bioes import bioes_to_spans
+from privyscope._core.decoder import viterbi_decode
+from privyscope._core.entities import build_label_list
+from privyscope._core.transitions import (
     OPERATING_POINTS,
     build_transition_matrix,
     categorize,

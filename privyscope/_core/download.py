@@ -1,6 +1,6 @@
 """Model weight download from Hugging Face Hub (SRS FR-2.8, §8.1).
 
-Weights are cached under ``~/.cache/entiscope/`` and reused on subsequent calls.
+Weights are cached under ``~/.cache/privyscope/`` and reused on subsequent calls.
 ``revision`` pins a version; ``HTTPS_PROXY`` is honoured by ``huggingface_hub``.
 No network calls occur once a local ``cache_dir`` is supplied.
 """
@@ -11,7 +11,7 @@ from pathlib import Path
 
 # The weights repo is language-specific and supplied by the active language
 # plugin (``LanguagePlugin.default_repo``); the core hardcodes nothing.
-DEFAULT_CACHE = Path(os.path.expanduser("~/.cache/entiscope"))
+DEFAULT_CACHE = Path(os.path.expanduser("~/.cache/privyscope"))
 
 
 def resolve_weights(
@@ -21,12 +21,12 @@ def resolve_weights(
 ) -> Path:
     """Return a local directory containing the engine bundle.
 
-    If ``cache_dir`` already contains ``entiscope_meta.json`` it is used directly
+    If ``cache_dir`` already contains ``privyscope_meta.json`` it is used directly
     (fully offline). Otherwise weights are downloaded from ``repo_id`` on the Hub.
     """
     if cache_dir is not None:
         local = Path(cache_dir)
-        if (local / "entiscope_meta.json").exists():
+        if (local / "privyscope_meta.json").exists():
             return local
 
     try:

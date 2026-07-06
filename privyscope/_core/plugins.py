@@ -1,10 +1,10 @@
 """Language-plugin contract + discovery (core+plugin architecture).
 
-Each language ships as a thin plugin package (``entiscope_ko``, ``entiscope_en``,
-…) that registers a :class:`LanguagePlugin` under the ``entiscope.languages``
+Each language ships as a thin plugin package (``privyscope_ko``, ``privyscope_en``,
+…) that registers a :class:`LanguagePlugin` under the ``privyscope.languages``
 entry-point group. The core engine discovers installed languages at runtime and
 loads their packaged YAML data + default weights repo. This lets a single
-``entiscope`` command serve any combination of co-installed languages without the
+``privyscope`` command serve any combination of co-installed languages without the
 file collisions that a self-contained per-language package would cause.
 """
 from __future__ import annotations
@@ -27,7 +27,7 @@ class LanguagePlugin:
     code: str                          # ISO code, e.g. "ko"
     display_name: str                  # human-readable, e.g. "Korean"
     default_repo: str                  # default HF Hub weights repo
-    package: str                       # plugin import name, e.g. "entiscope_ko"
+    package: str                       # plugin import name, e.g. "privyscope_ko"
     scripts: Tuple[str, ...] = ()      # script hints for auto-detection
     default_base_model: str = ""       # base checkpoint for fine-tuning
 
@@ -49,9 +49,9 @@ def installed_languages() -> Dict[str, LanguagePlugin]:
     from importlib.metadata import entry_points
 
     try:  # Python 3.10+ selectable API
-        eps = entry_points(group="entiscope.languages")
+        eps = entry_points(group="privyscope.languages")
     except TypeError:  # pragma: no cover - Python 3.9 fallback
-        eps = entry_points().get("entiscope.languages", [])
+        eps = entry_points().get("privyscope.languages", [])
 
     found: Dict[str, LanguagePlugin] = {}
     for ep in eps:
@@ -69,8 +69,8 @@ def get_plugin(code: str) -> LanguagePlugin:
     except KeyError:
         avail = ", ".join(sorted(langs)) or "(none installed)"
         raise ValueError(
-            f"no entiscope language plugin for {code!r}; installed: {avail}. "
-            f"Install one, e.g. pip install entiscope-{code}"
+            f"no privyscope language plugin for {code!r}; installed: {avail}. "
+            f"Install one, e.g. pip install privyscope-{code}"
         ) from None
 
 
@@ -79,20 +79,20 @@ def resolve_plugin(lang: str | None) -> LanguagePlugin:
 
     Raises with guidance when no language is installed, or when several are and
     none was named (the caller should pass ``lang=`` / ``--lang`` or use
-    ``Entiscope.auto()``).
+    ``Privyscope.auto()``).
     """
     if lang is not None:
         return get_plugin(lang)
     langs = installed_languages()
     if not langs:
         raise ValueError(
-            "no entiscope language plugin installed; install one, "
-            "e.g. pip install entiscope-ko"
+            "no privyscope language plugin installed; install one, "
+            "e.g. pip install privyscope-ko"
         )
     if len(langs) == 1:
         return next(iter(langs.values()))
     avail = ", ".join(sorted(langs))
     raise ValueError(
         f"multiple language plugins installed ({avail}); pass lang=... (API) "
-        f"or --lang (CLI) to choose, or use Entiscope.auto() for per-text routing"
+        f"or --lang (CLI) to choose, or use Privyscope.auto() for per-text routing"
     )

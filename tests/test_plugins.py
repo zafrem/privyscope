@@ -1,16 +1,16 @@
 """Language-plugin contract + resolution logic."""
 import pytest
 
-from entiscope._core import plugins
-from entiscope._core.plugins import LanguagePlugin, get_plugin, resolve_plugin
+from privyscope._core import plugins
+from privyscope._core.plugins import LanguagePlugin, get_plugin, resolve_plugin
 
 KO = LanguagePlugin(
-    code="ko", display_name="Korean", default_repo="zafrem/entiscope-ko",
-    package="entiscope_ko", scripts=("Hangul",), default_base_model="klue/roberta-base",
+    code="ko", display_name="Korean", default_repo="zafrem/privyscope-ko",
+    package="privyscope_ko", scripts=("Hangul",), default_base_model="klue/roberta-base",
 )
 EN = LanguagePlugin(
-    code="en", display_name="English", default_repo="zafrem/entiscope-en",
-    package="entiscope_en", scripts=("Latin",), default_base_model="roberta-base",
+    code="en", display_name="English", default_repo="zafrem/privyscope-en",
+    package="privyscope_en", scripts=("Latin",), default_base_model="roberta-base",
 )
 
 
@@ -35,7 +35,7 @@ def test_resolve_sole_installed(installed):
 
 def test_resolve_none_installed_errors(installed):
     installed({})
-    with pytest.raises(ValueError, match="no entiscope language plugin installed"):
+    with pytest.raises(ValueError, match="no privyscope language plugin installed"):
         resolve_plugin(None)
 
 
