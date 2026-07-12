@@ -57,3 +57,15 @@ include = ["privyscope*"]
 
 # The core ships NO language YAML — regex rules and entity configs come from the
 # installed language plugins (privyscope-ko, privyscope-en, …).
+
+[tool.pytest.ini_options]
+# Collect only this repo's tests. The pii-pattern-engine submodule ships its own suite
+# (3,500+ cases, and it imports `re2`), which pytest would otherwise pick up from the repo
+# root and fail on. `testpaths` covers a bare `pytest`; `norecursedirs` covers `pytest .`.
+testpaths = ["tests"]
+norecursedirs = ["pii-pattern-engine", "build", "dist", ".git"]
+
+[tool.coverage.run]
+# _vendor/ is verbatim upstream code (see setup.py), not ours to test — counting its 1,196
+# statements as uncovered dragged the reported total from ~50% down to 22%.
+omit = ["privyscope/_core/_vendor/*"]
