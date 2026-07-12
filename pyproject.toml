@@ -49,5 +49,11 @@ Documentation = "https://github.com/zafrem/privyscope/blob/main/README.md"
 where = ["."]
 include = ["privyscope*"]
 
+# Surname/address lists backing the verification functions vendored from the
+# pii-pattern-engine submodule (see setup.py). The loaders return empty sets if these
+# are missing, which would silently reject every name and address match.
+[tool.setuptools.package-data]
+"privyscope._core._vendor" = ["datas/*"]
+
 # The core ships NO language YAML — regex rules and entity configs come from the
 # installed language plugins (privyscope-ko, privyscope-en, …).
