@@ -17,7 +17,13 @@ from ._api import Privyscope
 from ._core.schema import RedactionResult, DetectedSpan, SCHEMA_VERSION
 from ._core.plugins import LanguagePlugin, installed_languages
 
-__version__ = "0.1.0"
+try:  # single source of truth is pyproject.toml — a hardcoded literal drifts (it sat at
+      # 0.1.0 through the 0.1.1 and 0.1.2 releases), and every language pack re-exports this.
+    from importlib.metadata import PackageNotFoundError, version
+
+    __version__ = version("privyscope")
+except (ImportError, PackageNotFoundError):  # source tree, not installed
+    __version__ = "0.0.0.dev0"
 
 __all__ = [
     "Privyscope",
