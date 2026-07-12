@@ -18,3 +18,6 @@ htmlcov/
 
 # OS
 .DS_Store
+
+# Vendored from the pii-pattern-engine submodule at build time (setup.py).
+privyscope/_core/_vendor/
