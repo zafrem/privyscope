@@ -33,7 +33,7 @@ dependencies = [
 [project.optional-dependencies]
 # Production inference needs no PyTorch (SRS §2.4). These extras are only for
 # user fine-tuning (FR-2.6) and local export.
-train = ["torch>=2.0", "datasets>=2.16"]
+train = ["torch>=2.4", "datasets>=2.16"]
 dev = ["pytest>=7.0", "pytest-cov>=4.0"]
 
 # The console command lives ONLY in the core, so co-installed language packs

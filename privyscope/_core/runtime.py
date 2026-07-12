@@ -7,8 +7,15 @@ character spans. No PyTorch at runtime (NFR / §2.4).
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import List, Sequence, Tuple
+
+# privyscope runs torch-free (ONNX Runtime + fast tokenizers). Tell transformers
+# not to probe for a PyTorch/TF backend so it stays silent on import; otherwise
+# it prints "[transformers] PyTorch was not found / Disabling PyTorch ..." noise.
+os.environ.setdefault("USE_TORCH", "0")
+os.environ.setdefault("USE_TF", "0")
 
 import numpy as np
 
