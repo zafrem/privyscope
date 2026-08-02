@@ -36,3 +36,18 @@ def test_merge_union_prefers_regex_on_overlap():
 def test_merge_union_keeps_disjoint():
     merged = merge_union([Span("PHONE", 0, 5)], [Span("PER", 6, 9)])
     assert len(merged) == 2
+
+
+def test_merge_union_extends_same_label_regex_to_ner_tail():
+    # A coarse address regex stops early; the same-label NER span extends further.
+    # The regex must not truncate the NER tail (else the building/unit leaks).
+    regex = [Span("LOC", 0, 16)]        # "…판교역로"
+    ner = [Span("LOC", 0, 20)]          # "…판교역로 166"
+    assert merge_union(regex, ner) == [Span("LOC", 0, 20)]
+
+
+def test_merge_union_cross_label_overlap_still_prefers_regex():
+    # Different labels must NOT be merged — regex keeps its label and extent.
+    regex = [Span("PHONE", 0, 12)]
+    ner = [Span("BANK", 0, 20)]
+    assert merge_union(regex, ner) == [Span("PHONE", 0, 12)]
