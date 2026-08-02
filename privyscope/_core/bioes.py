@@ -33,8 +33,15 @@ def spans_to_bioes(spans: Sequence[Span], offsets: Sequence[Offset]) -> List[str
     """Project character spans onto token offsets, producing one BIOES tag per token.
 
     Special tokens are signalled by a ``(0, 0)`` offset (the convention used by HF
-    fast tokenizers) and are always labelled ``O``. Tokens fully covered by a span
-    receive the span's tag; a span covering a single token becomes ``S-``.
+    fast tokenizers) and are always labelled ``O``. Any token that *overlaps* a
+    span receives the span's tag; a span covering a single token becomes ``S-``.
+
+    Overlap (not full containment) is deliberate: an agglutinative tokenizer can
+    fuse an entity's final sub-word with the following character into one token
+    (e.g. kcbert emits ``##동의`` for name-final ``동`` + particle ``의``). Requiring
+    full containment would drop that straddling token, silently truncating the
+    entity and leaking its last character — for a recall-first redaction engine,
+    over-covering the trailing particle by a char is the safer trade.
     """
     tags = [OUTSIDE] * len(offsets)
     for span in spans:
@@ -42,9 +49,9 @@ def spans_to_bioes(spans: Sequence[Span], offsets: Sequence[Offset]) -> List[str
             i
             for i, (s, e) in enumerate(offsets)
             if not (s == 0 and e == 0)  # skip special tokens
-            and s >= span.start
-            and e <= span.end
-            and e > s
+            and e > s                   # skip zero-width tokens
+            and s < span.end            # token overlaps the span ...
+            and e > span.start          # ... (partial overlap counts)
         ]
         if not member_idx:
             continue

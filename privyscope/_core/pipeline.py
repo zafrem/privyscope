@@ -7,12 +7,27 @@ output modes, entity filtering) lives here.
 """
 from __future__ import annotations
 
-from typing import Iterable, List, Optional, Sequence
+from typing import AbstractSet, Iterable, List, Optional, Sequence
 
 from .bioes import Span
 from .schema import DetectedSpan, RedactionResult, build_redacted_text
 
 REDACTED_PLACEHOLDER = "<REDACTED>"
+
+
+def filter_stopwords(
+    spans: Sequence[Span], text: str, stopwords: AbstractSet[str]
+) -> List[Span]:
+    """Drop spans whose surface text is exactly a denylisted common word.
+
+    Offset-preserving: reads ``text`` but never mutates it, so surviving spans keep
+    their original character offsets. Intended for the contextual NER stage, which
+    can over-fire on ordinary words (e.g. 주민/문서 mis-tagged ``PER``); structural
+    regex spans are validated upstream and are not passed through here.
+    """
+    if not stopwords:
+        return list(spans)
+    return [s for s in spans if text[s.start : s.end].strip() not in stopwords]
 
 
 def merge_union(regex_spans: Sequence[Span], ner_spans: Sequence[Span]) -> List[Span]:

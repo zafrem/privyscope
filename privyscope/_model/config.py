@@ -14,7 +14,7 @@ from .._core.entities import BASE_ENTITIES, build_label_maps
 
 # Last-resort base checkpoint when neither --base-model nor the active language
 # plugin's ``default_base_model`` is set. Language plugins supply the right one
-# (e.g. klue/roberta-base for ko, roberta-base for en) (SRS §1.4).
+# (e.g. beomi/kcbert-base for ko, distilbert-base-cased for en) (SRS §1.4).
 DEFAULT_BASE_MODEL = "bert-base-multilingual-cased"
 
 

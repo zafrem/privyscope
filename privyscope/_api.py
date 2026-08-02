@@ -30,7 +30,7 @@ from typing import Dict, Iterable, List, Optional, Sequence, Union
 from ._core.bioes import Span
 from ._core.detect import detect_language
 from ._core.download import resolve_weights
-from ._core.pipeline import assemble, merge_union
+from ._core.pipeline import assemble, filter_stopwords, merge_union
 from ._core.plugins import LanguagePlugin, installed_languages, resolve_plugin
 from ._core.regex_filter import RegexFilter
 from ._core.schema import RedactionResult
@@ -55,10 +55,12 @@ class Privyscope:
         regex_filter: RegexFilter,
         runtime=None,
         operating_point: OperatingPoint = "balanced",
+        stopwords: Optional[Iterable[str]] = None,
     ) -> None:
         self._regex = regex_filter
         self._runtime = runtime
         self._operating_point = operating_point
+        self._stopwords = frozenset(stopwords) if stopwords else frozenset()
 
     # -- construction -------------------------------------------------------
     @classmethod
@@ -86,13 +88,15 @@ class Privyscope:
         regex = RegexFilter.from_yaml(rules_path)
 
         runtime = None
+        stopwords: Optional[Iterable[str]] = None
         if not regex_only:
             from ._core.runtime import NerRuntime
 
             repo = repo_id or plugin.default_repo
             bundle = resolve_weights(repo_id=repo, revision=revision, cache_dir=cache_dir)
             runtime = NerRuntime(bundle, providers=providers)
-        return cls(regex, runtime, operating_point)
+            stopwords = plugin.stopwords()  # denylist only matters for NER spans
+        return cls(regex, runtime, operating_point, stopwords)
 
     @classmethod
     def regex_only(
@@ -144,6 +148,7 @@ class Privyscope:
         mismatch = False
         if self._runtime is not None:
             ner_spans, mismatch = self._runtime.predict(text, self._effective_biases(operating_point))
+            ner_spans = filter_stopwords(ner_spans, text, self._stopwords)
         merged = merge_union(regex_spans, ner_spans)
         return assemble(text, merged, output_mode, entity_types, mismatch)
 
