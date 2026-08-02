@@ -30,15 +30,47 @@ def filter_stopwords(
     return [s for s in spans if text[s.start : s.end].strip() not in stopwords]
 
 
+def _overlaps(a: Span, b: Span) -> bool:
+    return not (a.end <= b.start or a.start >= b.end)
+
+
 def merge_union(regex_spans: Sequence[Span], ner_spans: Sequence[Span]) -> List[Span]:
-    """Union-merge two span sets, resolving overlaps in favour of regex/longer."""
-    # Tag origin so regex (structural) wins ties on overlap.
-    tagged = [(s, 1) for s in regex_spans] + [(s, 0) for s in ner_spans]
-    # Resolve: higher origin first, then longer, then earlier.
+    """Union-merge two span sets, resolving overlaps in favour of regex/longer.
+
+    A regex span keeps its (higher-precision) label on overlap, but when the
+    overlapping NER span carries the *same* label the regex span is **extended**
+    to the union of both ranges rather than suppressing the NER span. This stops a
+    coarse structural matcher from truncating the model's wider extent — e.g. an
+    address regex that stops at the road name (``…판교역로``) must not drop the NER
+    tail (``…판교역로 166 판교푸르지오 101동 1204호``) and leak the building/unit.
+    Cross-label overlaps still resolve to the regex span (structural precision).
+    """
+    regex_list = list(regex_spans)
+    ner_list = list(ner_spans)
+    absorbed: set[int] = set()  # NER spans merged into a same-label regex span
+    extended: List[Span] = []
+    for r in regex_list:
+        start, end = r.start, r.end
+        changed = True
+        while changed:  # re-scan: an extension can reach a further same-label span
+            changed = False
+            for i, n in enumerate(ner_list):
+                if i in absorbed or n.label != r.label:
+                    continue
+                if start < n.end and end > n.start:  # overlap
+                    ns, ne = min(start, n.start), max(end, n.end)
+                    if (ns, ne) != (start, end):
+                        start, end, changed = ns, ne, True
+                    absorbed.add(i)
+        extended.append(r if (start, end) == (r.start, r.end) else Span(r.label, start, end))
+    remaining_ner = [n for i, n in enumerate(ner_list) if i not in absorbed]
+
+    # Resolve any residual overlaps: regex (structural) first, then longer, then earlier.
+    tagged = [(s, 1) for s in extended] + [(s, 0) for s in remaining_ner]
     tagged.sort(key=lambda t: (-t[1], -(t[0].end - t[0].start), t[0].start))
     kept: List[Span] = []
     for span, _origin in tagged:
-        if any(not (span.end <= k.start or span.start >= k.end) for k in kept):
+        if any(_overlaps(span, k) for k in kept):
             continue
         kept.append(span)
     kept.sort(key=lambda s: s.start)
