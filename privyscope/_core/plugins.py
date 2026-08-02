@@ -42,6 +42,22 @@ class LanguagePlugin:
     def entity_config_path(self) -> Path:
         return self._resource("entity_config.yaml")
 
+    def stopwords(self) -> frozenset:
+        """Common-word denylist from ``entity_config.yaml`` (empty if absent).
+
+        Surfaces a contextual NER span must never equal — an offset-preserving
+        false-positive filter applied to *output spans*, never to the input text.
+        """
+        import yaml
+
+        try:
+            data = yaml.safe_load(self.entity_config_path().read_text(encoding="utf-8")) or {}
+        except (FileNotFoundError, OSError):
+            return frozenset()
+        return frozenset(
+            w.strip() for w in (data.get("stopwords") or []) if isinstance(w, str) and w.strip()
+        )
+
 
 @lru_cache(maxsize=1)
 def installed_languages() -> Dict[str, LanguagePlugin]:
