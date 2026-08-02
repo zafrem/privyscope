@@ -23,6 +23,35 @@ from .bioes import Span, bioes_to_spans
 from .decoder import viterbi_decode
 
 
+def _reconstruct_offsets(text, tokenizer, input_ids) -> List[Tuple[int, int]]:
+    """Best-effort char offsets for a *slow* tokenizer that omits offset_mapping.
+
+    The Japanese ``BertJapaneseTokenizer`` (MeCab) has no fast variant, so it never
+    returns ``offset_mapping`` and ``predict`` would ``KeyError`` — the whole
+    ``redact()`` path crashes for ja. Greedily locate each sub-word surface (minus
+    the ``##`` continuation marker) in the text with a monotonic cursor; special or
+    unalignable tokens map to ``(0, 0)`` and decode as ``O``. Mirrors the MLM
+    training path (``domain_mlm._reconstruct_offsets``) so training and inference
+    treat slow tokenizers identically.
+    """
+    special = set(tokenizer.all_special_tokens)
+    tokens = tokenizer.convert_ids_to_tokens(list(input_ids))
+    offsets: List[Tuple[int, int]] = []
+    cursor = 0
+    for tok in tokens:
+        if tok in special:
+            offsets.append((0, 0))
+            continue
+        surface = tok[2:] if tok.startswith("##") else tok
+        idx = text.find(surface, cursor) if surface else -1
+        if idx == -1:
+            offsets.append((0, 0))
+            continue
+        offsets.append((idx, idx + len(surface)))
+        cursor = idx + len(surface)
+    return offsets
+
+
 class NerRuntime:
     """ONNX-backed BIOES NER engine for one language."""
 
@@ -51,12 +80,12 @@ class NerRuntime:
         """Return (spans, decoded_mismatch) for one input string."""
         enc = self.tokenizer(
             text,
-            return_offsets_mapping=True,
+            return_offsets_mapping=self.tokenizer.is_fast,
             truncation=True,
             max_length=self.max_length,
             return_tensors="np",
         )
-        offsets = enc["offset_mapping"][0]
+        input_ids = enc["input_ids"][0]
         emissions = self.session.run(
             None,
             {
@@ -66,7 +95,10 @@ class NerRuntime:
         )[0][0]  # [T, L]
         path = viterbi_decode(emissions, self.labels, biases)
         tags = [self.labels[i] for i in path]
-        offset_pairs = [(int(s), int(e)) for s, e in offsets]
+        if self.tokenizer.is_fast:  # fast tokenizers give exact char offsets
+            offset_pairs = [(int(s), int(e)) for s, e in enc["offset_mapping"][0]]
+        else:  # slow (ja MeCab): rebuild offsets so redact() works instead of crashing
+            offset_pairs = _reconstruct_offsets(text, self.tokenizer, input_ids.tolist())
         spans = bioes_to_spans(tags, offset_pairs)
         return spans, self._decode_mismatch(text, enc["input_ids"][0])
 
