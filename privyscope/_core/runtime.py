@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import unicodedata
 from pathlib import Path
 from typing import List, Sequence, Tuple
 
@@ -28,26 +29,42 @@ def _reconstruct_offsets(text, tokenizer, input_ids) -> List[Tuple[int, int]]:
 
     The Japanese ``BertJapaneseTokenizer`` (MeCab) has no fast variant, so it never
     returns ``offset_mapping`` and ``predict`` would ``KeyError`` — the whole
-    ``redact()`` path crashes for ja. Greedily locate each sub-word surface (minus
-    the ``##`` continuation marker) in the text with a monotonic cursor; special or
-    unalignable tokens map to ``(0, 0)`` and decode as ``O``. Mirrors the MLM
-    training path (``domain_mlm._reconstruct_offsets``) so training and inference
-    treat slow tokenizers identically.
+    ``redact()`` path crashes for ja. It also NFKC-normalizes text before tokenizing
+    (``MecabTokenizer(normalize_text=True)``): full-width digits/latin/punct fold to
+    half-width (``０９０`` -> ``09``, ``＠`` -> ``@``, ``－`` -> ``-``), so token surfaces
+    do NOT appear verbatim in the raw text. We therefore search in an NFKC-normalized
+    copy and map each match back to original character indices via ``norm_to_orig``.
+    A naive ``text.find`` on the raw text drops every full-width span to ``(0, 0)``,
+    silently losing full-width IDs/phones — common in real Japanese input. Special or
+    unalignable tokens map to ``(0, 0)`` and decode as ``O``. Mirrors the MLM training
+    path (``domain_mlm._reconstruct_offsets``) so training and inference align.
     """
     special = set(tokenizer.all_special_tokens)
     tokens = tokenizer.convert_ids_to_tokens(list(input_ids))
+    # Normalize per original char so normalized positions map back to the raw text.
+    # NFKC is mostly 1:1 but a few chars expand to several; norm_to_orig records, for
+    # each normalized char, which original char index it came from.
+    norm_parts: List[str] = []
+    norm_to_orig: List[int] = []
+    for oi, ch in enumerate(text):
+        for nc in unicodedata.normalize("NFKC", ch):
+            norm_parts.append(nc)
+            norm_to_orig.append(oi)
+    norm = "".join(norm_parts)
     offsets: List[Tuple[int, int]] = []
-    cursor = 0
+    cursor = 0  # position within the normalized string
     for tok in tokens:
         if tok in special:
             offsets.append((0, 0))
             continue
         surface = tok[2:] if tok.startswith("##") else tok
-        idx = text.find(surface, cursor) if surface else -1
+        idx = norm.find(surface, cursor) if surface else -1
         if idx == -1:
             offsets.append((0, 0))
             continue
-        offsets.append((idx, idx + len(surface)))
+        start = norm_to_orig[idx]
+        end = norm_to_orig[idx + len(surface) - 1] + 1
+        offsets.append((start, end))
         cursor = idx + len(surface)
     return offsets
 
