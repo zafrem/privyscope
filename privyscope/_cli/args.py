@@ -30,6 +30,19 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="privyscope",
         description="privyscope — multilingual PII detection & masking (redact / eval / train)",
+        epilog=(
+            "Each command has its own options — see `privyscope <command> -h`.\n"
+            "Common redact options:\n"
+            "  --lang CODE        force a language (e.g. ko, en, zh-Hans); omit to auto-detect\n"
+            "  --regex-only       structural PII only, no model download / no network\n"
+            "  --cache-dir DIR    use a local weight bundle (offline / air-gapped)\n"
+            "\n"
+            "Examples:\n"
+            "  privyscope redact --lang ko \"홍길동 010-1234-5678\"\n"
+            "  privyscope redact --regex-only \"email me at a@b.com\"\n"
+            "  privyscope redact --lang ko --cache-dir ./ko-bundle \"...\"   # offline\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p.add_argument("--version", action="version", version=_version_string())
     sub = p.add_subparsers(dest="command", required=True)
