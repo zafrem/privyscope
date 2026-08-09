@@ -9,8 +9,12 @@ plugin machinery that discovers installed **language packs**. It ships **no lang
 data** on its own — install at least one language pack to do real work:
 
 ```bash
+pip install privyscope         # Basic Package
+
 pip install privyscope-ko      # Korean   (pulls in this core automatically)
 pip install privyscope-en      # English
+pip install privyscope-ja      # Japanese
+pip install privyscope-zh-hans # Simplified Chinese
 ```
 
 Installing a language pack pulls in this core as a dependency, so you normally never
