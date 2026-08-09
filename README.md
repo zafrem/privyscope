@@ -41,6 +41,28 @@ privyscope redact --lang ko "Call 010-1234-5678"     # force Korean
 privyscope --version                                  # lists installed languages
 ```
 
+## In action
+
+`privyscope redact` highlights every detected span in the source text, prints the
+redacted output with each entity replaced by its label, and reports the span counts
+by label — across languages, from the same command.
+
+**English**
+
+![privyscope redacting English text](images/privyscope-en.jpg)
+
+**Korean**
+
+![privyscope redacting Korean text](images/privyscope-ko.jpg)
+
+**Japanese**
+
+![privyscope redacting Japanese text](images/privyscope-ja.jpg)
+
+**Chinese (Simplified)**
+
+![privyscope redacting Simplified Chinese text](images/privyscope-zh-hans.jpg)
+
 ## Python API
 
 ```python
