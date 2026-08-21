@@ -110,6 +110,29 @@ def bioes_to_spans(tags: Sequence[str], offsets: Sequence[Offset]) -> List[Span]
     return spans
 
 
+def coalesce_adjacent(spans: Sequence[Span]) -> List[Span]:
+    """Merge same-label spans whose character ranges touch or overlap.
+
+    A WordPiece tokenizer can split one token run mid-word (``2024`` -> ``202`` +
+    ``##4``); the model then sometimes assigns the pieces to two *abutting* spans of
+    the same label, so ``bioes_to_spans`` emits ``DATE[0:3]`` + ``DATE[3:10]`` for a
+    single date and the first char run silently drops when only the tail is kept
+    (``2024年…`` -> ``4年…``). The split falls inside one word with no separating
+    character, so the pieces are one entity. Merging is gated on ``start <= prev.end``
+    (touching or overlapping): two genuinely distinct same-type entities are written
+    with a delimiter between them, which leaves a character gap and is left untouched.
+    """
+    ordered = sorted(spans, key=lambda s: (s.start, s.end))
+    out: List[Span] = []
+    for s in ordered:
+        if out and s.label == out[-1].label and s.start <= out[-1].end:
+            prev = out[-1]
+            out[-1] = Span(prev.label, prev.start, max(prev.end, s.end))
+        else:
+            out.append(s)
+    return out
+
+
 # Valid BIOES transitions, used both to constrain the Viterbi decoder and to
 # validate hand-authored / synthetic label sequences in tests.
 def is_valid_transition(prev: str, nxt: str) -> bool:
