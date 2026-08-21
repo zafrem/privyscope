@@ -20,7 +20,7 @@ os.environ.setdefault("USE_TF", "0")
 
 import numpy as np
 
-from .bioes import Span, bioes_to_spans
+from .bioes import Span, bioes_to_spans, coalesce_adjacent
 from .decoder import viterbi_decode
 
 
@@ -116,11 +116,23 @@ class NerRuntime:
             offset_pairs = [(int(s), int(e)) for s, e in enc["offset_mapping"][0]]
         else:  # slow (ja MeCab): rebuild offsets so redact() works instead of crashing
             offset_pairs = _reconstruct_offsets(text, self.tokenizer, input_ids.tolist())
-        spans = bioes_to_spans(tags, offset_pairs)
+        spans = coalesce_adjacent(bioes_to_spans(tags, offset_pairs))
         return spans, self._decode_mismatch(text, enc["input_ids"][0])
 
     def _decode_mismatch(self, text: str, input_ids) -> bool:
-        """True when the tokenizer cannot round-trip the input (FR-2.2)."""
+        """True when the tokenizer cannot round-trip the input (FR-2.2).
+
+        The flag exists to catch genuine information loss (an ``[UNK]`` swallowing a
+        rare glyph) that would make offsets unreliable. It must NOT fire on the
+        transformations the tokenizer applies *by design*: WordPiece re-inserts spaces
+        between CJK chars, ``do_lower_case`` folds ``Kakao`` -> ``kakao``, and NFKC
+        folds full-width forms. Those leave character offsets intact, so normalize them
+        out (NFKC + casefold + whitespace) before comparing — otherwise ordinary
+        Latin-in-CJK text (a brand name inside a Chinese sentence) false-positives.
+        """
         decoded = self.tokenizer.decode(input_ids, skip_special_tokens=True)
-        norm = lambda s: "".join(s.split())  # noqa: E731  (ignore whitespace)
+
+        def norm(s: str) -> str:
+            return "".join(unicodedata.normalize("NFKC", s).casefold().split())
+
         return norm(decoded) != norm(text)
