@@ -68,6 +68,12 @@ by label — across languages, from the same command.
 
 ![privyscope redacting Simplified Chinese text](images/privyscope-zh-hans.jpg)
 
+
+**Chinese (Traditional)**
+
+![privyscope redacting Simplified Chinese text](images/privyscope-zh-hant.jpg)
+
+
 ## Python API
 
 ```python
