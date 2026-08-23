@@ -68,6 +68,10 @@ by label — across languages, from the same command.
 
 ![privyscope redacting Simplified Chinese text](images/privyscope-zh-hans.jpg)
 
+**Chinese (Traditional)**
+
+![privyscope redacting Simplified Chinese text](images/privyscope-zh-hant.jpg)
+
 ## Accuracy
 
 Each language pack is scored by **running the full pipeline** (regex + NER) over a
@@ -88,6 +92,7 @@ Per-entity strict F1 and the exact reproduction command
 (`privyscope eval --lang <code> your_val.jsonl`) are in each pack's README. Two gaps are
 genuine model weaknesses under active work: zh-Hans `ID_NUM` (18-digit resident-ID)
 recall and zh-Hant `LOC` boundary over-capture.
+
 
 ## Python API
 
