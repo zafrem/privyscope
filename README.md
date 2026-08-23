@@ -15,6 +15,7 @@ pip install privyscope-ko      # Korean   (pulls in this core automatically)
 pip install privyscope-en      # English
 pip install privyscope-ja      # Japanese
 pip install privyscope-zh-hans # Simplified Chinese
+pip install privyscope-zh-hant # Traditional Chinese
 ```
 
 Installing a language pack pulls in this core as a dependency, so you normally never
