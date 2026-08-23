@@ -15,6 +15,7 @@ pip install privyscope-ko      # Korean   (pulls in this core automatically)
 pip install privyscope-en      # English
 pip install privyscope-ja      # Japanese
 pip install privyscope-zh-hans # Simplified Chinese
+pip install privyscope-zh-hant # Traditional Chinese
 ```
 
 Installing a language pack pulls in this core as a dependency, so you normally never
@@ -66,6 +67,27 @@ by label — across languages, from the same command.
 **Chinese (Simplified)**
 
 ![privyscope redacting Simplified Chinese text](images/privyscope-zh-hans.jpg)
+
+## Accuracy
+
+Each language pack is scored by **running the full pipeline** (regex + NER) over a
+held-out validation set disjoint from training, using `typed`/**strict** scoring (label
+**and** exact offsets must match). These numbers are therefore a **conservative lower
+bound** — the validation sets deliberately mix spoken, typo, and space-collapsed
+registers, so clean production text scores higher.
+
+| Language | Pack | micro-F1 | n | Strong entities | Known gap |
+|---|---|---|---|---|---|
+| Korean | `privyscope-ko` | **0.940** | 1,000 | LOC, EMAIL, BANK, PHONE, ID_NUM | DATE 0.78 (irregular spacing) |
+| Japanese | `privyscope-ja` | **0.921** | 1,000 | PER, LOC, DATE | ID_NUM 0.56, BANK 0.71 |
+| Chinese (Traditional) | `privyscope-zh-hant` | **0.918** | 1,000 | PER, PHONE, BANK, DATE, ID_NUM | **LOC 0.14** (address over-capture) |
+| Chinese (Simplified) | `privyscope-zh-hans` | **0.906** | 1,000 | PER, LOC, DATE, BANK (all 1.00) | **ID_NUM recall ~0.03** (resident-ID) |
+| English | `privyscope-en` | **0.839** | 1,000 | DATE, PHONE, BANK | EMAIL 0.81 (noisy gold boundaries) |
+
+Per-entity strict F1 and the exact reproduction command
+(`privyscope eval --lang <code> your_val.jsonl`) are in each pack's README. Two gaps are
+genuine model weaknesses under active work: zh-Hans `ID_NUM` (18-digit resident-ID)
+recall and zh-Hant `LOC` boundary over-capture.
 
 ## Python API
 
