@@ -14,6 +14,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Tuple
 
+from .pipeline import SpanTrim
+
 
 @dataclass(frozen=True)
 class LanguagePlugin:
@@ -57,6 +59,41 @@ class LanguagePlugin:
         return frozenset(
             w.strip() for w in (data.get("stopwords") or []) if isinstance(w, str) and w.strip()
         )
+
+    def span_trims(self) -> Tuple[SpanTrim, ...]:
+        """Boundary-trim rules from ``entity_config.yaml`` (empty if absent).
+
+        For languages whose tokenizer fuses a span-final character with a following
+        particle (Korean ``20일`` + ``이``); see :class:`SpanTrim`.
+        """
+        import yaml
+
+        try:
+            data = yaml.safe_load(self.entity_config_path().read_text(encoding="utf-8")) or {}
+        except (FileNotFoundError, OSError):
+            return ()
+        return parse_span_trims(data)
+
+
+def parse_span_trims(data: dict) -> Tuple[SpanTrim, ...]:
+    """Read the optional ``span_trim:`` list from an ``entity_config.yaml`` mapping.
+
+    Each entry is ``{label, after, suffixes}``; malformed entries are skipped rather than
+    failing the load, since the section only refines span boundaries.
+    """
+    trims = []
+    for entry in (data or {}).get("span_trim") or []:
+        if not isinstance(entry, dict):
+            continue
+        label, after, suffixes = entry.get("label"), entry.get("after"), entry.get("suffixes")
+        if not (isinstance(label, str) and label and isinstance(after, str) and after):
+            continue
+        if not isinstance(suffixes, list):
+            continue
+        suffixes = tuple(x for x in suffixes if isinstance(x, str) and x)
+        if suffixes:
+            trims.append(SpanTrim(label, after, suffixes))
+    return tuple(trims)
 
 
 @lru_cache(maxsize=1)

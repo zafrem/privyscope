@@ -7,7 +7,8 @@ output modes, entity filtering) lives here.
 """
 from __future__ import annotations
 
-from typing import AbstractSet, Iterable, List, Optional, Sequence
+from dataclasses import dataclass
+from typing import AbstractSet, Iterable, List, Optional, Sequence, Tuple
 
 from .bioes import Span
 from .schema import DetectedSpan, RedactionResult, build_redacted_text
@@ -28,6 +29,50 @@ def filter_stopwords(
     if not stopwords:
         return list(spans)
     return [s for s in spans if text[s.start : s.end].strip() not in stopwords]
+
+
+@dataclass(frozen=True)
+class SpanTrim:
+    """Plugin-declared rule: drop a fused trailing ``suffix`` after ``after`` from a span.
+
+    Subword tokenizers can fuse a boundary character with what follows it (Korean
+    ``##일이`` = day + subject particle). The model tags whole tokens, so a span that ends
+    after ``20일`` can only be emitted as ``20일이``; the true boundary is inside the token.
+    """
+
+    label: str
+    after: str
+    suffixes: Tuple[str, ...]
+
+
+def trim_trailing(spans: Sequence[Span], text: str, trims: Sequence[SpanTrim]) -> List[Span]:
+    """Shorten spans that end in ``after + suffix`` so they end at ``after``.
+
+    Character-level and offset-preserving: reads ``text`` but never mutates it. Applied once
+    per span, to the contextual NER stage only (regex spans are exact by construction), and
+    never shortens a span below its ``after`` anchor.
+    """
+    if not trims:
+        return list(spans)
+    out: List[Span] = []
+    for span in spans:
+        surface = text[span.start : span.end]
+        for trim in trims:
+            if span.label != trim.label:
+                continue
+            suffix = next(
+                (
+                    x
+                    for x in sorted(trim.suffixes, key=len, reverse=True)
+                    if surface.endswith(trim.after + x)
+                ),
+                None,
+            )
+            if suffix is not None:
+                span = Span(span.label, span.start, span.end - len(suffix))
+                break
+        out.append(span)
+    return out
 
 
 def _overlaps(a: Span, b: Span) -> bool:
