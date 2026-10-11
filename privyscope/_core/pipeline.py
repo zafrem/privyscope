@@ -43,6 +43,10 @@ class SpanTrim:
     label: str
     after: str
     suffixes: Tuple[str, ...]
+    #: Characters that must remain once the suffix is cut. With an empty ``after`` (any
+    #: character may precede the suffix) this is what stops a short span being emptied, e.g.
+    #: a two-syllable Korean name + ``가`` must keep both syllables.
+    min_keep: int = 1
 
 
 def trim_trailing(spans: Sequence[Span], text: str, trims: Sequence[SpanTrim]) -> List[Span]:
@@ -50,7 +54,7 @@ def trim_trailing(spans: Sequence[Span], text: str, trims: Sequence[SpanTrim]) -
 
     Character-level and offset-preserving: reads ``text`` but never mutates it. Applied once
     per span, to the contextual NER stage only (regex spans are exact by construction), and
-    never shortens a span below its ``after`` anchor.
+    never shortens a span below its ``after`` anchor or its ``min_keep`` characters.
     """
     if not trims:
         return list(spans)
@@ -68,7 +72,7 @@ def trim_trailing(spans: Sequence[Span], text: str, trims: Sequence[SpanTrim]) -
                 ),
                 None,
             )
-            if suffix is not None:
+            if suffix is not None and len(surface) - len(suffix) >= trim.min_keep:
                 span = Span(span.label, span.start, span.end - len(suffix))
                 break
         out.append(span)

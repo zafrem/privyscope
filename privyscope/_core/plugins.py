@@ -78,21 +78,28 @@ class LanguagePlugin:
 def parse_span_trims(data: dict) -> Tuple[SpanTrim, ...]:
     """Read the optional ``span_trim:`` list from an ``entity_config.yaml`` mapping.
 
-    Each entry is ``{label, after, suffixes}``; malformed entries are skipped rather than
+    Each entry is ``{label, suffixes}`` plus either ``after`` (the character the span must
+    end on once the suffix is cut) or ``min_keep >= 2`` (any character may precede the
+    suffix, but at least that many must remain). Malformed entries are skipped rather than
     failing the load, since the section only refines span boundaries.
     """
     trims = []
     for entry in (data or {}).get("span_trim") or []:
         if not isinstance(entry, dict):
             continue
-        label, after, suffixes = entry.get("label"), entry.get("after"), entry.get("suffixes")
-        if not (isinstance(label, str) and label and isinstance(after, str) and after):
+        label, suffixes = entry.get("label"), entry.get("suffixes")
+        after, min_keep = entry.get("after", ""), entry.get("min_keep", 1)
+        if not (isinstance(label, str) and label and isinstance(after, str)):
+            continue
+        if not (isinstance(min_keep, int) and not isinstance(min_keep, bool) and min_keep >= 1):
+            continue
+        if not after and min_keep < 2:   # nothing anchors the cut: refuse rather than guess
             continue
         if not isinstance(suffixes, list):
             continue
         suffixes = tuple(x for x in suffixes if isinstance(x, str) and x)
         if suffixes:
-            trims.append(SpanTrim(label, after, suffixes))
+            trims.append(SpanTrim(label, after, suffixes, min_keep))
     return tuple(trims)
 
 

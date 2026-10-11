@@ -74,6 +74,33 @@ def test_parse_span_trims():
     assert parse_span_trims({}) == ()
 
 
+NAME = SpanTrim(label="PER", after="", suffixes=("가", "의"), min_keep=2)
+
+
+def test_parse_anchorless_trim_needs_min_keep():
+    ok = {"span_trim": [{"label": "PER", "suffixes": ["가"], "min_keep": 2}]}
+    assert parse_span_trims(ok) == (SpanTrim("PER", "", ("가",), 2),)
+    for bad in ({"label": "PER", "suffixes": ["가"]},                       # nothing anchors the cut
+                {"label": "PER", "suffixes": ["가"], "min_keep": 1},
+                {"label": "PER", "suffixes": ["가"], "min_keep": "2"},
+                {"label": "PER", "suffixes": ["가"], "min_keep": True}):
+        assert parse_span_trims({"span_trim": [bad]}) == ()
+
+
+def test_anchorless_trim_removes_particle_after_a_name():
+    text = "담당은 홍희지가 맡습니다"
+    s = Span("PER", text.index("홍"), text.index("가") + 1)
+    assert [text[x.start:x.end] for x in trim_trailing([s], text, [NAME])] == ["홍희지"]
+
+
+def test_anchorless_trim_keeps_min_chars():
+    text = "정가 안내"           # 2-char span: cutting 가 would leave one syllable
+    s = Span("PER", 0, 2)
+    assert trim_trailing([s], text, [NAME]) == [s]
+    text = "신하의 책"           # 3 chars -> 2 remain, allowed
+    assert trim_trailing([Span("PER", 0, 3)], text, [NAME]) == [Span("PER", 0, 2)]
+
+
 class _FakeRuntime:
     """Stands in for the ONNX runtime: always tags the day token plus its particle."""
     default_biases = [0.0] * len(CATEGORIES)

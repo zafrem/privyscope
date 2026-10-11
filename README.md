@@ -82,15 +82,15 @@ registers, so clean production text scores higher.
 
 | Language | Pack | micro-F1 | n | Strong entities | Known gap |
 |---|---|---|---|---|---|
-| Korean | `privyscope-ko` | **0.940** | 1,000 | LOC, DATE, EMAIL, BANK, PHONE | PER 0.90, ID_NUM recall 0.85 |
-| Japanese | `privyscope-ja` | **0.992** | 1,000 | PER, LOC, DATE, ID_NUM, PHONE, SECRET | BANK 0.96 |
-| Chinese (Traditional) | `privyscope-zh-hant` | **0.973** | 1,000 | PER, LOC, PHONE, SECRET | ID_NUM precision 0.87, DATE 0.94 |
-| Chinese (Simplified) | `privyscope-zh-hans` | **0.985** | 1,000 | PER, LOC, DATE, BANK, SECRET (all 1.00) | PHONE 0.93, ID_NUM recall 0.93 |
-| English | `privyscope-en` | **0.855** | 1,000 | DATE, PHONE, BANK | EMAIL 0.82, PER 0.84, LOC 0.80 |
+| Korean | `privyscope-ko` | **0.980** | 1,000 | PER, LOC, DATE, EMAIL, BANK, PHONE | ID_NUM recall 0.85 |
+| Japanese | `privyscope-ja` | **0.993** | 1,000 | PER, LOC, DATE, ID_NUM, PHONE, SECRET | BANK 0.96 |
+| Chinese (Traditional) | `privyscope-zh-hant` | **0.976** | 1,000 | PER, LOC, PHONE, SECRET | ID_NUM precision 0.90, DATE 0.94 |
+| Chinese (Simplified) | `privyscope-zh-hans` | **0.992** | 1,000 | PER, LOC, DATE, BANK, SECRET, PHONE | ID_NUM recall 0.93 |
+| English | `privyscope-en` | **0.857** | 1,000 | DATE, PHONE, BANK | EMAIL 0.82, PER 0.84, LOC 0.81 |
 
 Per-entity strict F1 and the exact reproduction command
 (`privyscope eval --lang <code> your_val.jsonl`) are in each pack's README. The largest
-open gaps are ko `PER` and `ID_NUM`, zh-Hant `ID_NUM` precision, and the English pack,
+open gaps are ko `ID_NUM`, zh-Hant `ID_NUM` precision, and the English pack,
 which is due for a retrain on regenerated data.
 
 
