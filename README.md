@@ -3,6 +3,8 @@
 **Multilingual PII detection & masking engine** — the language-neutral core of the
 [privyscope](https://github.com/zafrem) project.
 
+🌐 **[Showcase & Interactive Docs](https://privyscope.codeforlife.dev/)**
+
 This package contains the engine (a two-stage hybrid pipeline: a regex filter plus
 an optional ONNX BIOES/Viterbi NER stage), the `privyscope` console command, and the
 plugin machinery that discovers installed **language packs**. It ships **no language
@@ -75,23 +77,26 @@ by label — across languages, from the same command.
 ## Accuracy
 
 Each language pack is scored by **running the full pipeline** (regex + NER) over a
-held-out validation set disjoint from training, using `typed`/**strict** scoring (label
-**and** exact offsets must match). These numbers are therefore a **conservative lower
-bound** — the validation sets deliberately mix spoken, typo, and space-collapsed
-registers, so clean production text scores higher.
+held-out validation set disjoint from training (`n = 1,000`, `seed = 0` shuffle),
+using `typed`/**strict** scoring (label **and** exact offsets must match) across all
+8 base entities (`PER`, `LOC`, `DATE`, `EMAIL`, `ID_NUM`, `BANK`, `PHONE`, `SECRET`)
+and all 4 registers (`formal`, `conversational`, `edge_case`, `spoken`). These
+numbers are therefore a **conservative lower bound** — the validation sets
+deliberately mix spoken, typo, and space-collapsed registers, so clean production
+text scores higher.
 
-| Language | Pack | micro-F1 | n | Strong entities | Known gap |
+| Language | Pack | micro-F1 | n | Strong entities (≥ 0.98) | Known gap |
 |---|---|---|---|---|---|
-| Korean | `privyscope-ko` | **0.980** | 1,000 | PER, LOC, DATE, EMAIL, BANK, PHONE | ID_NUM recall 0.85 |
-| Japanese | `privyscope-ja` | **0.993** | 1,000 | PER, LOC, DATE, ID_NUM, PHONE, SECRET | BANK 0.96 |
-| Chinese (Traditional) | `privyscope-zh-hant` | **0.976** | 1,000 | PER, LOC, PHONE, SECRET | ID_NUM precision 0.90, DATE 0.94 |
-| Chinese (Simplified) | `privyscope-zh-hans` | **0.992** | 1,000 | PER, LOC, DATE, BANK, SECRET, PHONE | ID_NUM recall 0.93 |
-| English | `privyscope-en` | **0.857** | 1,000 | DATE, PHONE, BANK | EMAIL 0.82, PER 0.84, LOC 0.81 |
+| Japanese | `privyscope-ja` | **0.996** | 1,000 | PER, LOC, DATE, EMAIL, ID_NUM, PHONE, SECRET | BANK 0.94 |
+| Chinese (Simplified) | `privyscope-zh-hans` | **0.984** | 1,000 | PER, LOC, DATE, BANK, SECRET | PHONE recall 0.93, ID_NUM recall 0.94, EMAIL 0.95 |
+| Chinese (Traditional) | `privyscope-zh-hant` | **0.980** | 1,000 | PER, LOC, DATE, BANK, SECRET | ID_NUM precision 0.87, EMAIL 0.95 |
+| English | `privyscope-en` | **0.945** | 1,000 | DATE, EMAIL, BANK, PHONE | ID_NUM recall 0.77, LOC 0.92, PER 0.94 |
+| Korean | `privyscope-ko` | **0.926** | 1,000 | PER, DATE, EMAIL, PHONE | LOC 0.49, ID_NUM recall 0.89 |
 
 Per-entity strict F1 and the exact reproduction command
 (`privyscope eval --lang <code> your_val.jsonl`) are in each pack's README. The largest
-open gaps are ko `ID_NUM`, zh-Hant `ID_NUM` precision, and the English pack,
-which is due for a retrain on regenerated data.
+open gaps are ko `LOC` (multi-unit apartment/building tails split by the NER model),
+en `ID_NUM` recall, and zh-Hant `ID_NUM` precision.
 
 
 ## Python API
