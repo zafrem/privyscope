@@ -14,7 +14,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Tuple
 
-from .pipeline import SpanTrim
+from .pipeline import NerPrecedence, SpanTrim
 
 
 @dataclass(frozen=True)
@@ -73,6 +73,38 @@ class LanguagePlugin:
         except (FileNotFoundError, OSError):
             return ()
         return parse_span_trims(data)
+
+
+    def ner_precedence(self) -> Tuple[NerPrecedence, ...]:
+        """NER-over-regex precedence rules from ``entity_config.yaml`` (empty if absent).
+
+        See :class:`NerPrecedence`; the default is that a regex span wins every cross-label overlap.
+        """
+        import yaml
+
+        try:
+            data = yaml.safe_load(self.entity_config_path().read_text(encoding="utf-8")) or {}
+        except (FileNotFoundError, OSError):
+            return ()
+        return parse_ner_precedence(data)
+
+
+def parse_ner_precedence(data: dict) -> Tuple[NerPrecedence, ...]:
+    """Read the optional ``ner_precedence:`` list (``{label, over: [labels]}``) from an entity config.
+
+    Malformed entries are skipped rather than failing the load, as with ``span_trim``.
+    """
+    rules = []
+    for entry in (data or {}).get("ner_precedence") or []:
+        if not isinstance(entry, dict):
+            continue
+        label, over = entry.get("label"), entry.get("over")
+        if not (isinstance(label, str) and label and isinstance(over, list)):
+            continue
+        over = tuple(x for x in over if isinstance(x, str) and x and x != label)
+        if over:
+            rules.append(NerPrecedence(label, over))
+    return tuple(rules)
 
 
 def parse_span_trims(data: dict) -> Tuple[SpanTrim, ...]:

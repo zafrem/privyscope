@@ -49,6 +49,38 @@ class SpanTrim:
     min_keep: int = 1
 
 
+@dataclass(frozen=True)
+class NerPrecedence:
+    """Plugin-declared rule: an NER span labelled ``label`` beats overlapping regex spans in ``over``.
+
+    The default merge lets a regex span win every cross-label overlap (structural precision).
+    That is wrong where a number's meaning comes from its context rather than its shape: a bare
+    9-digit routing number matches the ID_NUM rule and a dashed account number matches the PHONE
+    rule, yet the model, which reads the surrounding words, calls both BANK. A plugin lists
+    only those label pairs here; every other cross-label overlap still resolves to the regex.
+    """
+
+    label: str
+    over: Tuple[str, ...]
+
+
+def apply_ner_precedence(
+    regex_spans: Sequence[Span], ner_spans: Sequence[Span], rules: Sequence[NerPrecedence]
+) -> List[Span]:
+    """Drop regex spans that a higher-precedence NER span overlaps (see :class:`NerPrecedence`)."""
+    if not rules:
+        return list(regex_spans)
+    out: List[Span] = []
+    for r in regex_spans:
+        beaten = any(
+            r.label in rule.over and any(n.label == rule.label and _overlaps(r, n) for n in ner_spans)
+            for rule in rules
+        )
+        if not beaten:
+            out.append(r)
+    return out
+
+
 def trim_trailing(spans: Sequence[Span], text: str, trims: Sequence[SpanTrim]) -> List[Span]:
     """Shorten spans that end in ``after + suffix`` so they end at ``after``.
 

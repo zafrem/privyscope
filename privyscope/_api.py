@@ -30,7 +30,15 @@ from typing import Dict, Iterable, List, Optional, Sequence, Union
 from ._core.bioes import Span
 from ._core.detect import detect_language
 from ._core.download import resolve_weights
-from ._core.pipeline import SpanTrim, assemble, filter_stopwords, merge_union, trim_trailing
+from ._core.pipeline import (
+    NerPrecedence,
+    SpanTrim,
+    apply_ner_precedence,
+    assemble,
+    filter_stopwords,
+    merge_union,
+    trim_trailing,
+)
 from ._core.plugins import LanguagePlugin, installed_languages, resolve_plugin
 from ._core.regex_filter import RegexFilter
 from ._core.schema import RedactionResult
@@ -57,12 +65,14 @@ class Privyscope:
         operating_point: OperatingPoint = "balanced",
         stopwords: Optional[Iterable[str]] = None,
         span_trims: Optional[Iterable[SpanTrim]] = None,
+        ner_precedence: Optional[Iterable[NerPrecedence]] = None,
     ) -> None:
         self._regex = regex_filter
         self._runtime = runtime
         self._operating_point = operating_point
         self._stopwords = frozenset(stopwords) if stopwords else frozenset()
         self._span_trims = tuple(span_trims) if span_trims else ()
+        self._ner_precedence = tuple(ner_precedence) if ner_precedence else ()
 
     # -- construction -------------------------------------------------------
     @classmethod
@@ -92,6 +102,7 @@ class Privyscope:
         runtime = None
         stopwords: Optional[Iterable[str]] = None
         span_trims: Optional[Iterable[SpanTrim]] = None
+        ner_precedence: Optional[Iterable[NerPrecedence]] = None
         if not regex_only:
             from ._core.runtime import NerRuntime
 
@@ -100,7 +111,8 @@ class Privyscope:
             runtime = NerRuntime(bundle, providers=providers)
             stopwords = plugin.stopwords()  # denylist only matters for NER spans
             span_trims = plugin.span_trims()  # so does token-fused-particle trimming
-        return cls(regex, runtime, operating_point, stopwords, span_trims)
+            ner_precedence = plugin.ner_precedence()  # and context-decided labels (BANK vs ID_NUM)
+        return cls(regex, runtime, operating_point, stopwords, span_trims, ner_precedence)
 
     @classmethod
     def regex_only(
@@ -154,6 +166,7 @@ class Privyscope:
             ner_spans, mismatch = self._runtime.predict(text, self._effective_biases(operating_point))
             ner_spans = filter_stopwords(ner_spans, text, self._stopwords)
             ner_spans = trim_trailing(ner_spans, text, self._span_trims)
+        regex_spans = apply_ner_precedence(regex_spans, ner_spans, self._ner_precedence)
         merged = merge_union(regex_spans, ner_spans)
         return assemble(text, merged, output_mode, entity_types, mismatch)
 
