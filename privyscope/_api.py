@@ -78,7 +78,7 @@ class Privyscope:
     @classmethod
     def from_pretrained(
         cls,
-        operating_point: OperatingPoint = "balanced",
+        operating_point: OperatingPoint = None,
         *,
         lang: Optional[str] = None,
         repo_id: Optional[str] = None,
@@ -94,8 +94,12 @@ class Privyscope:
         plugin is used (raises if several are installed — pass ``lang`` or use
         :meth:`auto`). Pass ``regex_only=True`` to skip the NER stage (no weights
         required). ``cache_dir`` pointing at a local bundle enables offline use.
+        ``operating_point=None`` uses the pack's preferred preset (``default_operating_point``
+        in its ``entity_config.yaml``), else ``balanced``; an explicit value always wins.
         """
         plugin = resolve_plugin(lang)
+        if operating_point is None:
+            operating_point = plugin.default_operating_point() or "balanced"
         rules_path = regex_rules or _regex_rules_path(plugin)
         regex = RegexFilter.from_yaml(rules_path)
 
@@ -124,7 +128,7 @@ class Privyscope:
     @classmethod
     def auto(
         cls,
-        operating_point: OperatingPoint = "balanced",
+        operating_point: OperatingPoint = None,
         *,
         cache_dir: Optional[str] = None,
         providers: Optional[Sequence[str]] = None,

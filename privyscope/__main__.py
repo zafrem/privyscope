@@ -43,7 +43,7 @@ def _build_engine(args):
     plugin. No ``--lang`` with several installed → an auto-routing dispatcher.
     Returns an ``Privyscope`` or an ``AutoPrivyscope`` (same redact surface).
     """
-    operating_point = _parse_operating_point(getattr(args, "operating_point", "balanced"))
+    operating_point = _parse_operating_point(getattr(args, "operating_point", None))
     cache_dir = getattr(args, "cache_dir", None)
     regex_only = getattr(args, "regex_only", False)
     providers = _PROVIDERS.get(getattr(args, "device", "cpu"), None)

@@ -54,8 +54,9 @@ def build_parser() -> argparse.ArgumentParser:
     _add_lang(r)
     r.add_argument("--device", choices=["cpu", "cuda", "coreml"], default="cpu")
     r.add_argument(
-        "--operating-point", default="balanced",
-        help="high_recall | balanced | high_precision, or comma-separated raw biases",
+        "--operating-point", default=None,
+        help="high_recall | balanced | high_precision, or comma-separated raw biases "
+             "(default: the language pack's preset, else balanced)",
     )
     r.add_argument("--output-mode", choices=["typed", "redacted"], default="typed")
     r.add_argument("--entity-types", help="comma-separated subset, e.g. PER,PHONE")
@@ -69,7 +70,7 @@ def build_parser() -> argparse.ArgumentParser:
     e.add_argument("dataset", help="JSONL with text + spans")
     _add_lang(e)
     e.add_argument("--eval-mode", choices=["typed", "untyped"], default="typed")
-    e.add_argument("--operating-point", default="balanced")
+    e.add_argument("--operating-point", default=None)
     e.add_argument("--regex-only", action="store_true")
     e.add_argument("--cache-dir")
     e.add_argument("--limit", type=int, default=None)

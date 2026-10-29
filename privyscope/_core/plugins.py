@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 from .pipeline import NerPrecedence, SpanTrim
 
@@ -87,6 +87,23 @@ class LanguagePlugin:
         except (FileNotFoundError, OSError):
             return ()
         return parse_ner_precedence(data)
+
+    def default_operating_point(self) -> Optional[str]:
+        """Pack-preferred operating-point preset from ``entity_config.yaml`` (None if absent).
+
+        Used when the caller does not choose one; an explicit ``operating_point`` always wins.
+        Unknown preset names are ignored.
+        """
+        import yaml
+
+        from .transitions import OPERATING_POINTS
+
+        try:
+            data = yaml.safe_load(self.entity_config_path().read_text(encoding="utf-8")) or {}
+        except (FileNotFoundError, OSError):
+            return None
+        name = data.get("default_operating_point")
+        return name if isinstance(name, str) and name in OPERATING_POINTS else None
 
 
 def parse_ner_precedence(data: dict) -> Tuple[NerPrecedence, ...]:
