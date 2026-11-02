@@ -77,26 +77,31 @@ by label — across languages, from the same command.
 ## Accuracy
 
 Each language pack is scored by **running the full pipeline** (regex + NER) over a
-held-out validation set disjoint from training (`n = 1,000`, `seed = 0` shuffle),
-using `typed`/**strict** scoring (label **and** exact offsets must match) across all
-8 base entities (`PER`, `LOC`, `DATE`, `EMAIL`, `ID_NUM`, `BANK`, `PHONE`, `SECRET`)
-and all 4 registers (`formal`, `conversational`, `edge_case`, `spoken`). These
-numbers are therefore a **conservative lower bound** — the validation sets
-deliberately mix spoken, typo, and space-collapsed registers, so clean production
-text scores higher.
+500-sentence sample of a held-out **real-text** validation set (disjoint from training by
+text and by sentence skeleton: Wikipedia, news and social-media sentences, public-data and chat
+dialogues, and, for English, LLM-written Nemotron-PII documents), using `typed`/**strict**
+scoring (label **and** exact offsets must match). The earlier 0.93-0.99 figures came from a
+template-generated validation set that was in-distribution; they have been retired and are
+not comparable with these.
 
-| Language | Pack | micro-F1 | n | Strong entities (≥ 0.98) | Known gap |
-|---|---|---|---|---|---|
-| Japanese | `privyscope-ja` | **0.996** | 1,000 | PER, LOC, DATE, EMAIL, ID_NUM, PHONE, SECRET | BANK 0.94 |
-| Chinese (Simplified) | `privyscope-zh-hans` | **0.984** | 1,000 | PER, LOC, DATE, BANK, SECRET | PHONE recall 0.93, ID_NUM recall 0.94, EMAIL 0.95 |
-| Chinese (Traditional) | `privyscope-zh-hant` | **0.980** | 1,000 | PER, LOC, DATE, BANK, SECRET | ID_NUM precision 0.87, EMAIL 0.95 |
-| English | `privyscope-en` | **0.945** | 1,000 | DATE, EMAIL, BANK, PHONE | ID_NUM recall 0.77, LOC 0.92, PER 0.94 |
-| Korean | `privyscope-ko` | **0.926** | 1,000 | PER, DATE, EMAIL, PHONE | LOC 0.49, ID_NUM recall 0.89 |
+| Language | Pack | micro-F1 | PER | LOC | Other entities | Weakest entity |
+|---|---|---|---|---|---|---|
+| Chinese (Traditional) | `privyscope-zh-hant` | **0.872** | 0.91 | 0.81 | not labelled | LOC 0.81 |
+| English | `privyscope-en` | **0.842** | 0.93 | 0.86 | DATE 0.94, EMAIL 1.00, ID_NUM 0.87, BANK 0.92, PHONE 0.85, SECRET 0.68 | SECRET 0.68 |
+| Korean | `privyscope-ko` | **0.826** | 0.83 | 0.79 | DATE 0.56 (21 spans), PHONE 0.99 | LOC 0.79, PER 0.83 |
+| Chinese (Simplified) | `privyscope-zh-hans` | **0.739** | 0.83 | 0.65 | not labelled | LOC 0.65 (precision 0.60) |
+| Japanese | `privyscope-ja` | **0.716** | 0.86 | 0.61 | not labelled | LOC 0.61 (recall 0.54) |
+
+Korean also scores **0.911** on a 500-sentence chat-dialogue hold-out (KDPII: PER 0.89, LOC 0.80,
+PHONE 0.99, DATE 0.99, EMAIL 1.00, BANK 1.00, ID_NUM 0.87). The ja / zh sets label only names and
+places, so other entities are not scored there. Simplified Chinese uses its pack default,
+the recall-oriented `high_recall` operating point (`balanced` scores 0.654); every other pack
+defaults to `balanced`. 500-row samples carry roughly +/- 0.02-0.04 of sampling noise per entity.
 
 Per-entity strict F1 and the exact reproduction command
-(`privyscope eval --lang <code> your_val.jsonl`) are in each pack's README. The largest
-open gaps are ko `LOC` (multi-unit apartment/building tails split by the NER model),
-en `ID_NUM` recall, and zh-Hant `ID_NUM` precision.
+(`privyscope eval --lang <code> your_val.jsonl`) are in each pack's README. The open gaps are
+ja and zh-Hans `LOC`, en `SECRET` / `PHONE` precision, and ko name and place boundaries.
+
 
 
 ## Python API
